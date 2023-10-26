@@ -77,23 +77,30 @@ ds = ds.isel(pos=slice(1,-1))
 # totalSystemEng   = totalElectronEng+totalIonEng+totalNeutralEng
 
 #----- Total Input Power
-electronInput   = (3./2.)*(ds["Pe_src"]*ds["dv"]).sum("pos")# Pe_src is in Pa.s^-1 which is J.m^-3.s^-1 = W.m^-3
-ionInput        = (3./2.)*(ds["Pd+_src"]*ds["dv"]).sum("pos")
+electronInput    = (3./2.)*(ds["Pe_src"]*ds["dv"])# Pe_src is in Pa.s^-1 which is J.m^-3.s^-1 = W.m^-3
+ionInput         = (3./2.)*(ds["Pd+_src"]*ds["dv"])
+electronInputSum = electronInput.sum("pos")
+ionInputSum      = ionInput.sum("pos")
 #----- Impurity Radiation
-totalRadArPow   = (ds["Rar"]*ds["dv"]).sum("pos")
+totalRadArPow    = ds["Rar"]*ds["dv"]
+totalRadArPowSum = totalRadArPow.sum("pos")
 #----- Hydrogenic Radiation
-totalRadHexPow  = np.abs((ds["Rd+_ex"] *ds["dv"]).sum("pos")) # Needs to be negative because of output conventions
-totalRadHrecPow = np.abs((ds["Rd+_rec"]*ds["dv"]).sum("pos"))
+totalRadHexPow     = ds["Rd+_ex"] *ds["dv"] # Needs to be negative because of output conventions
+totalRadHrecPow    = ds["Rd+_rec"]*ds["dv"]
+totalRadHexPowSum  = np.abs(totalRadHexPow.sum("pos"))
+totalRadHrecPowSum = np.abs(totalRadHrecPow.sum("pos"))
 #----- CX
-totalCXKinetic  = 0.5*((abs(ds["Fdd+_cx"])*abs(ds["Vd+"]))*ds["dv"]).sum("pos") # E = 0.5* mv*v ???
-totalCXTherm    = (ds["Edd+_cx"]*ds["dv"]).sum("pos")
+totalCXKinetic    = 0.5*((abs(ds["Fdd+_cx"])*abs(ds["Vd+"]))*ds["dv"]) # E = 0.5* mv*v ???
+totalCXTherm      = ds["Edd+_cx"]*ds["dv"]
+totalCXKineticSum = totalCXKinetic.sum("pos")
+totalCXThermSum   = totalCXTherm.sum("pos")
 #----- Energy Source from dissociating neutral molecules (from recycling)
 totalDissNeut  = G_t
 
 #----- Total Power Loss
-totalPowLoss    = Q_t+totalRadArPow+totalRadHexPow+totalRadHrecPow
+totalPowLoss    = Q_t+totalRadArPowSum+totalRadHexPowSum+totalRadHrecPowSum
 #----- Total Input Power
-totalInputPow   = electronInput+ionInput
+totalInputPow   = electronInputSum+ionInputSum
 totalPowsrc     = totalInputPow+totalDissNeut
 #----- Power Imbalance
 powerImbalance = totalPowsrc.values[-1]-totalPowLoss.values[-1]
@@ -102,7 +109,7 @@ powerImbPerc   = 100.*(totalPowsrc.values[-1]-totalPowLoss.values[-1])/totalPows
 #----- Total energy needed to ionise all the neutrals
 totalIoniseEng  = (ds["Nd"]*ds["dv"]*13.6*q_e).sum("pos")
 powIncFactor    = float(options["Pe"]["powFactor"])
-deltaPower      = (powIncFactor-1.)*(electronInput+ionInput).values[0]
+deltaPower      = (powIncFactor-1.)*(electronInputSum+ionInputSum).values[0]
 timeToIonise    = totalIoniseEng.values[0]/deltaPower # J/(J/s) = s
 print("Input power = %.3e W, total energy needed to ionise neutrals %.3e J"%(totalPowsrc.values[-1],totalIoniseEng.values[0]))
 print("Delta Power = %.3e W (factor %.3fx increase), time needed (for zero additional losses) = %.3e ms"%(deltaPower,powIncFactor,timeToIonise*1e3))
@@ -110,16 +117,16 @@ print("Delta Power = %.3e W (factor %.3fx increase), time needed (for zero addit
 
 print("\nSources")
 print("-----")
-print("{:<20} {:.3e}".format("Electron Source: ",electronInput.values[-1]))
-print("{:<20} {:.3e}".format("Ion Source: ",ionInput.values[-1]))
+print("{:<20} {:.3e}".format("Electron Source: ",  electronInputSum.values[-1]))
+print("{:<20} {:.3e}".format("Ion Source: ",       ionInputSum.values[-1]))
 print("{:<20} {:.3e}".format("Recycled Neutrals: ",G_t.values[-1]))
 
 print("\nLosses")
 print("-----")
-print("{:<20} {:.3e}".format("Excitation: ",totalRadHexPow.values[-1]))
-print("{:<20} {:.3e}".format("Recombination: ",totalRadHrecPow.values[-1]))
+print("{:<20} {:.3e}".format("Excitation: ",     totalRadHexPowSum.values[-1]))
+print("{:<20} {:.3e}".format("Recombination: ",  totalRadHrecPowSum.values[-1]))
 print("{:<20} {:.3e}".format("Electorn sheath: ",Q_t_electrons.values[-1]))
-print("{:<20} {:.3e}".format("Ion sheath: ",Q_t_ions.values[-1]))
+print("{:<20} {:.3e}".format("Ion sheath: ",     Q_t_ions.values[-1]))
 
 print("\nPower balance")
 print("-----")
@@ -128,16 +135,16 @@ print("{:<20} {:.3e}".format("Total Losses: ",totalPowLoss.values[-1]))
 print("{:<20} {:.3e} / {:.1f}%".format("Power Imbalance: ",powerImbalance,powerImbPerc))
 
 #----- Sources
-plt.plot(ds["t"].values,totalPowsrc.values,    label="Total Source", color="firebrick")
-plt.plot(ds["t"].values,totalInputPow.values,  label="Input Power",  color="tab:orange",linestyle="--")
-plt.plot(ds["t"].values,totalDissNeut,         label="Nuetral Diss.",color="crimson",   linestyle="--")
+plt.plot(ds["t"].values,totalPowsrc.values,       label="Total Source", color="firebrick")
+plt.plot(ds["t"].values,totalInputPow.values,     label="Input Power",  color="tab:orange",linestyle="--")
+plt.plot(ds["t"].values,totalDissNeut,            label="Nuetral Diss.",color="crimson",   linestyle="--")
 #----- Sinks
-plt.plot(ds["t"].values,totalPowLoss.values,   label="Total Losses",       color="midnightblue")
-plt.plot(ds["t"].values,totalRadArPow.values,  label="Ar. Rad.",           color="mediumblue")
-plt.plot(ds["t"].values,totalRadHexPow.values, label="H.Exc. Rad.",        color="mediumpurple")
-plt.plot(ds["t"].values,totalRadHrecPow.values,label="H.Rec. Rad",         color="darkorchid")
-plt.plot(ds["t"].values,Q_t_ions,              label="Ion sheath trans.",  color="tab:purple")
-plt.plot(ds["t"].values,Q_t_electrons,         label="Elec. sheath trans.",color="royalblue")
+plt.plot(ds["t"].values,totalPowLoss.values,      label="Total Losses",       color="midnightblue")
+plt.plot(ds["t"].values,totalRadArPowSum.values,  label="Ar. Rad.",           color="mediumblue")
+plt.plot(ds["t"].values,totalRadHexPowSum.values, label="H.Exc. Rad.",        color="mediumpurple")
+plt.plot(ds["t"].values,totalRadHrecPowSum.values,label="H.Rec. Rad",         color="darkorchid")
+plt.plot(ds["t"].values,Q_t_ions,                 label="Ion sheath trans.",  color="tab:purple")
+plt.plot(ds["t"].values,Q_t_electrons,            label="Elec. sheath trans.",color="royalblue")
 # plt.ylim([-0.1e9,1.1e9])
 plt.legend(loc="best",ncol=2)
 plt.xlabel("Time (ms)")
