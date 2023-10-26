@@ -25,6 +25,7 @@ guardRep = True
 ds = ds2
 
 ds["dv"] = ds["J"]*ds["dx"]*ds["dy"]*ds["dz"]
+ds["t"]  = ds["t"]-ds["t"].values[0]
 
 # def tanh(x,x0):
 #     return (np.exp(2.*(x-x0))-1.)/(np.exp(2.*(x-x0))+1.)
@@ -134,6 +135,7 @@ print("{:<20} {:.3e}".format("Total Source: ",totalPowsrc.values[-1]))
 print("{:<20} {:.3e}".format("Total Losses: ",totalPowLoss.values[-1]))
 print("{:<20} {:.3e} / {:.1f}%".format("Power Imbalance: ",powerImbalance,powerImbPerc))
 
+plt.figure()
 #----- Sources
 plt.plot(ds["t"].values,totalPowsrc.values,       label="Total Source", color="firebrick")
 plt.plot(ds["t"].values,totalInputPow.values,     label="Input Power",  color="tab:orange",linestyle="--")
@@ -149,4 +151,29 @@ plt.plot(ds["t"].values,Q_t_electrons,            label="Elec. sheath trans.",co
 plt.legend(loc="best",ncol=2)
 plt.xlabel("Time (ms)")
 plt.ylabel("Power (W)")
+# plt.show()
+
+powerLossSpace = totalRadArPow+totalRadHexPow+totalRadHrecPow
+powerSrceSpace = electronInput+ionInput
+powerDiffSpace = powerSrceSpace-powerLossSpace
+X, Y = np.meshgrid(ds["pos"].values,ds["t"])
+plt.figure()
+plt.title("Power Sinks")
+plt.pcolormesh(X,Y,powerLossSpace,cmap='viridis')
+# plt.colorbar()
+plt.xlim(left=0)
+plt.xlabel("Cell Pos (m)")
+plt.ylabel("Time (ms)")
+plt.figure()
+plt.title("Power Sources")
+plt.pcolormesh(X,Y,powerSrceSpace,cmap='viridis')
+plt.xlim(left=0)
+plt.xlabel("Cell Pos (m)")
+plt.ylabel("Time (ms)")
+plt.figure()
+plt.title("Net Power")
+plt.pcolormesh(X,Y,powerDiffSpace,cmap='viridis')
+plt.xlim(left=0)
+plt.xlabel("Cell Pos (m)")
+plt.ylabel("Time (ms)")
 plt.show()
