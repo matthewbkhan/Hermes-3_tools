@@ -49,11 +49,21 @@ ny_stand    = 1600
 dymin_stand = 0.050
 
 """ det10m """
-ny_log  = 1200
-L_log   = 0.52709
+# ny_log  = 1200
+# L_log   = 0.52709
+# k_log   = -4. # -1.5
+# x_0_log = (1./11.)*2.*np.pi
+# y_0_log = 0.015
+# ny_log  = 800
+# L_log   = 0.76314
+# k_log   = -4. # -1.5
+# x_0_log = (1./11.)*2.*np.pi
+# y_0_log = 0.025
+ny_log  = 960
+L_log   = 0.306055
 k_log   = -4. # -1.5
-x_0_log = (1./11.)*2.*np.pi
-y_0_log = 0.015
+x_0_log = (1./5.)*2.*np.pi
+y_0_log = 0.02
 
 #----- Comparing different standard grids
 if(0):
