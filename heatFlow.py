@@ -24,8 +24,19 @@ guardRep = True
 
 ds = ds2
 
-ds["dv"] = ds["J"]*ds["dx"]*ds["dy"]*ds["dz"]
-ds["t"]  = ds["t"]-ds["t"].values[0]
+#----- Conversion factor for Sd+_iz or _rec
+# print(ds["Sd+_iz"].attrs["conversion"])
+# print(ds.attrs["metadata"]["Nnorm"])
+# print(ds.attrs["metadata"]["Omega_ci"])
+# print(ds.attrs["metadata"]["Nnorm"]*ds.attrs["metadata"]["Omega_ci"])
+# sys.exit()
+
+#----- Plot J
+if(0):
+    ds["dv"] = ds["J"]*ds["dx"]*ds["dy"]*ds["dz"]
+    ds["t"]  = ds["t"]-ds["t"].values[0]
+    plt.plot(ds["pos"].values,ds["J"])
+    plt.show()
 
 # def tanh(x,x0):
 #     return (np.exp(2.*(x-x0))-1.)/(np.exp(2.*(x-x0))+1.)
@@ -83,8 +94,11 @@ ionInput         = (3./2.)*(ds["Pd+_src"]*ds["dv"])
 electronInputSum = electronInput.sum("pos")
 ionInputSum      = ionInput.sum("pos")
 #----- Impurity Radiation
-totalRadArPow    = ds["Rar"]*ds["dv"]
-totalRadArPowSum = totalRadArPow.sum("pos")
+try:
+    totalRadArPow    = ds["Rar"]*ds["dv"]
+    totalRadArPowSum = totalRadArPow.sum("pos")
+except exceptionError as Exception:
+    print(exceptionError,"\nNo Ar impurity")
 #----- Hydrogenic Radiation
 totalRadHexPow     = ds["Rd+_ex"] *ds["dv"] # Needs to be negative because of output conventions
 totalRadHrecPow    = ds["Rd+_rec"]*ds["dv"]
@@ -107,12 +121,54 @@ totalPowsrc     = totalInputPow+totalDissNeut
 powerImbalance = totalPowsrc.values[-1]-totalPowLoss.values[-1]
 powerImbPerc   = 100.*(totalPowsrc.values[-1]-totalPowLoss.values[-1])/totalPowsrc.values[-1]
 
+#----- Input Power variation
+if(1):
+    import os
+    tempVal  = 5.0 # eV
+    tempMean = (ds["Te"].values+ds["Td+"].values)/2.
+    detLoc   = ds["pos"].values[-1]-ds["pos"].values[np.argmin(np.abs(tempMean-tempVal),axis=1)]
+    plt.figure()
+    plt.title(filePath.split("/")[-2])
+    ax1 = plt.gca()
+    ax2 = ax1.twinx()
+    ax1.plot(ds["t"].values-ds["t"].values[0],totalInputPow.values*1e-6,     color="tab:blue",  label="Input Power")
+    # ax1.plot(ds["t"].values-ds["t"].values[0],electronInputSum*1e-6,         color="tab:red",   label="Pe_src")
+    # ax1.plot(ds["t"].values-ds["t"].values[0],ionInputSum*1e-6,              color="tab:orange",label="Pd+_src")
+    ax1.axhline(y=772,color="tab:purple",linestyle="--",label="Base Power (772 MW)")
+    # ax1.legend(loc="best")
+    ax1.set_xlabel("Time (ms)")
+    ax1.set_ylabel("Input Power (MW)")
+    ax1.grid(True)
+    # #----- Pow Factor
+    # ax2.plot(ds["t"].values-ds["t"].values[0],totalInputPow.values*1e-6/772.,color="white",     alpha=0.0)
+    # ax2.set_ylabel("Power Factor")
+    #----- Det Loc
+    ax2.plot(ds["t"].values-ds["t"].values[0],detLoc, color="tab:red", label="Det Loc")
+    ax2.set_ylabel("Detachment Front Location (m)")
+
+    lns1, labs1 = ax1.get_legend_handles_labels()
+    lns2, labs2 = ax2.get_legend_handles_labels()
+    ax1.legend(lns1+lns2,labs1+labs2,loc="best")
+
+    plt.show()
+
 #----- Total energy needed to ionise all the neutrals
-totalIoniseEng  = (ds["Nd"]*ds["dv"]*13.6*q_e).sum("pos")
+# detLoc  = []
+# tempVal = 7.0 # eV
+# for i in range(len(dataDict["t_array"])):
+#     tempHR = np.interp(cellPoshR,cellPos,(dataDict["Te"][i,:]+dataDict["Td+"][i,:])/2.)
+#     detPos = cellPoshR[-1]-cellPoshR[np.argmin(np.abs(tempHR-tempVal))]
+#     detLoc.append(detPos)
+tempMean        = (ds["Te"].values+ds["Td+"].values)/2.
+detLoc          = ds["pos"].values[-1]-ds["pos"].values[np.argmin(np.abs(tempMean-5.0),axis=1)]
+timeIndex       = 0#np.argmin(detLoc)
+E_ion           = 30.*q_e
+totalIoniseEng  = (ds["Nd"]*ds["dv"]*E_ion).sum("pos")
 powIncFactor    = float(options["Pe"]["powFactor"])
 deltaPower      = (powIncFactor-1.)*(electronInputSum+ionInputSum).values[0]
-timeToIonise    = totalIoniseEng.values[0]/deltaPower # J/(J/s) = s
-print("Input power = %.3e W, total energy needed to ionise neutrals %.3e J"%(totalPowsrc.values[-1],totalIoniseEng.values[0]))
+timeToIonise    = totalIoniseEng.values[timeIndex]/deltaPower # J/(J/s) = s
+print("Input power = %.3e W, total energy needed to ionise neutrals %.3e J"%(totalPowsrc.values[-1],totalIoniseEng.values[timeIndex]))
+# sys.exit()
 print("Delta Power = %.3e W (factor %.3fx increase), time needed (for zero additional losses) = %.3e ms"%(deltaPower,powIncFactor,timeToIonise*1e3))
 # sys.exit()
 
