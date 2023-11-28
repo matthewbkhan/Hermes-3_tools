@@ -14,7 +14,8 @@ def logisticGrid(yRange,y_0,L,k,x_0):
     totalDist = 0.
     for i,y in enumerate(yRange):
         dy  = dy_func(y,y_0,L,k,x_0)
-        dy -= 0.015*(np.exp(y-(77.855/78.13)*2.*np.pi))**2.
+        #----- This next line adds in a a decrease in dy as you approach the target to emmulate the standard
+        # dy -= 0.015*(np.exp(y-(77.855/78.13)*2.*np.pi))**2.
         totalDist += dy
         dy_s.append(dy)
         cellPos.append(totalDist)
@@ -48,11 +49,11 @@ ny_stand    = 1600
 dymin_stand = 0.050
 
 """ det10m """
-ny_log  = 512
-L_log   = 0.9518 # 0.94248
+ny_log  = 1200
+L_log   = 0.52709
 k_log   = -4. # -1.5
-x_0_log = (1./7.5)*2.*np.pi
-y_0_log = 0.025
+x_0_log = (1./11.)*2.*np.pi
+y_0_log = 0.015
 
 #----- Comparing different standard grids
 if(0):
@@ -89,6 +90,7 @@ dy_log, cellPos_log, totalDist_log = logisticGrid(yRange_log,y_0_log,L_log,k_log
 
 print("Standard length = %.3f, goal of %.2f"%(totalDist_stand,length))
 print("Logisitc length = %.3f, goal of %.2f"%(totalDist_log,length))
+# sys.exit()
 
 dy, cellPos, totalDist, yRange = dy_log,   cellPos_log,   totalDist_log,   yRange_log
 # dy, cellPos, totalDist, yRange = dy_stand, cellPos_stand, totalDist_stand, yRange_stand
@@ -113,7 +115,7 @@ print("y_0 = %.5e"%y_0_log)
 print("L = %.5e"%L_log)
 print("k = %.5e"%k_log)
 print("x_0 = %.5e"%x_0_log)
-print("dy = (y_0+L/(1.0+exp(-k*(y-x_0))))-0.015*(exp(y-(77.855/78.13)*2.*pi))**2.")
+print("dy = (y_0+L/(1.0+exp(-k*(y-x_0))))-0.015*(exp(y-(77.855/78.13)*2.*pi))^2.0")
 print("y_xpt = %.5e\n"%calc_y_xpt)
 
 xPointArg  = np.argmin(np.abs(cellPos-length_xpt))
