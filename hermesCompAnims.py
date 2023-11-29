@@ -41,18 +41,24 @@ def loadData(filePath):
     Omega_ci = collect("Omega_ci",path=filePath)
     Tnorm    = collect("Tnorm",   path=filePath)
     Pnorm    = Nnorm*Tnorm*1.602e-19 # Converts p to Pascals
-    stepTime = options["timestep"]/Omega_ci
 
     # Cell volume is the volume of each cell, stepTime is the real time of each output step
     # J must be normalised by rho_s0^2 as it is effectively an area and x,y=1
+    if not(isinstance(options["timestep"], int)):
+        try:
+            options["timestep"] = eval(options["timestep"])
+        except eE as Exception:
+            print(eE)
+            print("Timestep error")
     cellVolume = dataDict["J"]*rho_s0*rho_s0*dy
-    stepTime   = options["timestep"]/Omega_ci
+    stepTime = options["timestep"]/Omega_ci
     dataDict["cellVolume"] = cellVolume
 
     # Timing data
     dataDict["t_array"]    = collect("t_array", path=filePath,yguards=True,info=False,strict=True)
     dataDict["iteration"]  = collect("t_array", path=filePath,yguards=True,info=False,strict=True)
     dataDict["wtime"]      = collect("wtime",   path=filePath,yguards=True,info=False,strict=True)
+    dataDict["wall_time"]  = collect("wall_time",path=filePath,yguards=True,info=False,strict=True)
     dataDict["ncalls"]     = collect("ncalls",  path=filePath,yguards=True,info=False,strict=True)
 
     # Normalise to time array
@@ -184,220 +190,263 @@ def loadData(filePath):
 ## Load in the shot data and input options ##
 #############################################
 
-""" STEP Power Drop Scan """
-# path = "./simulations/WP_X/"
-# extens = ["1-2/","1-4/","1-8/","1-16/"]
-# fileNames = [path+"spr45_powerScan_baseline_"+exten for exten in extens]
+#----- Old Runs
+if(0):
+    """ STEP Power Drop Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["1-2/","1-4/","1-8/","1-16/"]
+    # fileNames = [path+"spr45_powerScan_baseline_"+exten for exten in extens]
 
-""" Flat STEP Power Drop Scan """
-# path = "./simulations/WP_X/"
-# extens = ["1-2/","1-4/","1-8/","1-16/","1-32/","1-64/"]
-# fileNames = [path+"spr45_powerScan_flat_"+exten for exten in extens]
+    """ Flat STEP Power Drop Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["1-2/","1-4/","1-8/","1-16/","1-32/","1-64/"]
+    # fileNames = [path+"spr45_powerScan_flat_"+exten for exten in extens]
 
-""" Real J STEP Power Drop Scan """
-# path = "./simulations/WP_X/"
-# extens = ["1-2/","1-4/","1-8/","1-16/","1-32/","1-64_RA/"]
-# fileNames = [path+"spr45_powerScan_realJ_"+exten for exten in extens]
+    """ Real J STEP Power Drop Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["1-2/","1-4/","1-8/","1-16/","1-32/","1-64_RA/"]
+    # fileNames = [path+"spr45_powerScan_realJ_"+exten for exten in extens]
 
-""" Real J Neutral thermal_conduction STEP Power Drop Scan """
-# path = "./simulations/WP_X/"
-# # extens = ["1-2/","1-8/","1-32/"]
-# # fileNames = [path+"spr45_powerScan_realJ_neutCond_"+exten for exten in extens]
-# extens = ["1-2/","neutCond_1-2/","neutCond_1-8/","1-8/","neutCond_1-32/","1-32/"]
-# fileNames = [path+"spr45_powerScan_realJ_"+exten for exten in extens]
+    """ Real J Neutral thermal_conduction STEP Power Drop Scan """
+    # path = "./simulations/WP_X/"
+    # # extens = ["1-2/","1-8/","1-32/"]
+    # # fileNames = [path+"spr45_powerScan_realJ_neutCond_"+exten for exten in extens]
+    # extens = ["1-2/","neutCond_1-2/","neutCond_1-8/","1-8/","neutCond_1-32/","1-32/"]
+    # fileNames = [path+"spr45_powerScan_realJ_"+exten for exten in extens]
 
-""" Real J Neutral thermal_conduction STEP Power Drop Scan """
-# path = "./simulations/WP_X/"
-# extens = ["1-2/","1-4/","1-8/"]
-# fileNames = [path+"spr45_powerScan_realJ_fimp04_"+exten for exten in extens]
+    """ Real J Neutral thermal_conduction STEP Power Drop Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["1-2/","1-4/","1-8/"]
+    # fileNames = [path+"spr45_powerScan_realJ_fimp04_"+exten for exten in extens]
 
-""" Real J Weak det. STEP Power Increase Scan """
-# path = "./simulations/WP_X/"
-# extens = ["2x/","4x/","8x/"]
-# fileNames = [path+"spr45_powerScan_realJ_fimp04_"+exten for exten in extens]
+    """ Real J Weak det. STEP Power Increase Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["2x/","4x/","8x/"]
+    # fileNames = [path+"spr45_powerScan_realJ_fimp04_"+exten for exten in extens]
 
-""" Set up for Nitrogen low det 1m """
-# path = "./simulations/WP_X/"
-# extens = ["lowDet/","lowDet_II/","lowDet_III/"]
-# fileNames = [path+"spr45_realJ_neutMom_fimp04_nitrogen_"+exten for exten in extens]
+    """ Set up for Nitrogen low det 1m """
+    # path = "./simulations/WP_X/"
+    # extens = ["lowDet/","lowDet_II/","lowDet_III/"]
+    # fileNames = [path+"spr45_realJ_neutMom_fimp04_nitrogen_"+exten for exten in extens]
 
-""" Real J Weak det. Neutral Momentum STEP Power Increase Scan """
-# path = "./simulations/WP_X/"
-# extens = ["2x/","4x/","8x/"]
-# fileNames = [path+"spr45_realJ_neutMom_fimp04_lowDet_"+exten for exten in extens]
+    """ Real J Weak det. Neutral Momentum STEP Power Increase Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["2x/","4x/","8x/"]
+    # fileNames = [path+"spr45_realJ_neutMom_fimp04_lowDet_"+exten for exten in extens]
 
-""" Comparing Real J Weak det. with Neutral Momentum STEP Power Increase Scan """
-# path = "./simulations/WP_X/"
-# extens = ["realJ_neutMom_fimp04_lowDet_2x/","powerScan_realJ_fimp04_2x/","realJ_neutMom_fimp04_lowDet_4x/","powerScan_realJ_fimp04_4x/","realJ_neutMom_fimp04_lowDet_8x/","powerScan_realJ_fimp04_8x/"]
-# fileNames = [path+"spr45_"+exten for exten in extens]
+    """ Comparing Real J Weak det. with Neutral Momentum STEP Power Increase Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["realJ_neutMom_fimp04_lowDet_2x/","powerScan_realJ_fimp04_2x/","realJ_neutMom_fimp04_lowDet_4x/","powerScan_realJ_fimp04_4x/","realJ_neutMom_fimp04_lowDet_8x/","powerScan_realJ_fimp04_8x/"]
+    # fileNames = [path+"spr45_"+exten for exten in extens]
 
-""" Real J Weak det. with Neutral Momentum and Nitrogen impurity STEP Power Increase Scan """
-# path = "./simulations/WP_X/"
-# extens = ["2x/","4x/","8x/"]
-# fileNames = [path+"spr45_realJ_neutMom_fimp04_nitrogen_lowDet_2-0_"+exten for exten in extens]
+    """ Real J Weak det. with Neutral Momentum and Nitrogen impurity STEP Power Increase Scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["2x/","4x/","8x/"]
+    # fileNames = [path+"spr45_realJ_neutMom_fimp04_nitrogen_lowDet_2-0_"+exten for exten in extens]
 
-""" Real J Neutral Diffusion 7e19 starting density, increaseing impurity fraction """
-# path = "./simulations/WP_X/"
-# extens = ["fimp02", "fimp04", "fimp08"]
-# fileNames = [path+"spr45_realJ_neutDiff_"+exten+"_07e19" for exten in extens]
+    """ Real J Neutral Diffusion 7e19 starting density, increaseing impurity fraction """
+    # path = "./simulations/WP_X/"
+    # extens = ["fimp02", "fimp04", "fimp08"]
+    # fileNames = [path+"spr45_realJ_neutDiff_"+exten+"_07e19" for exten in extens]
 
-""" Real J Neutral Diffusion 20e19 starting density, increaseing impurity fraction """
-# path = "./simulations/WP_X/"
-# extens = ["fimp02", "fimp04", "fimp08"]
-# fileNames = [path+"spr45_realJ_neutDiff_"+exten+"_20e19" for exten in extens]
+    """ Real J Neutral Diffusion 20e19 starting density, increaseing impurity fraction """
+    # path = "./simulations/WP_X/"
+    # extens = ["fimp02", "fimp04", "fimp08"]
+    # fileNames = [path+"spr45_realJ_neutDiff_"+exten+"_20e19" for exten in extens]
 
-""" Real J Neutral Diffusion 28e19 starting density, changing the neutral diffusion coefficient """
-# path = "./simulations/WP_X/"
-# extens = ["_dneut05", "_dneut20", "_dneut40"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19"+exten for exten in extens]
-# labels = ["dneut =  5", "dneut = 20", "dneut = 40"]
+    """ Real J Neutral Diffusion 28e19 starting density, changing the neutral diffusion coefficient """
+    # path = "./simulations/WP_X/"
+    # extens = ["_dneut05", "_dneut20", "_dneut40"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19"+exten for exten in extens]
+    # labels = ["dneut =  5", "dneut = 20", "dneut = 40"]
 
-""" Real J Neutral Diffusion 40e19 starting density, changing the neutral diffusion coefficient """
-# path = "./simulations/WP_X/"
-# extens = ["dneut05", "extended", "dneut20", "dneut40"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_40e19_"+exten for exten in extens]
-# # labels = ["dneut =  5", "dneut = 10", "dneut = 20", "dneut = 40"]
+    """ Real J Neutral Diffusion 40e19 starting density, changing the neutral diffusion coefficient """
+    # path = "./simulations/WP_X/"
+    # extens = ["dneut05", "extended", "dneut20", "dneut40"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_40e19_"+exten for exten in extens]
+    # # labels = ["dneut =  5", "dneut = 10", "dneut = 20", "dneut = 40"]
 
-""" Restart from fimp01 40e19 case with different fimps """
-# path = "./simulations/WP_X/"
-# extens = ["fimp01_40e19_extended", "fimp02_40e19", "fimp04_40e19", "fimp08_40e19"]
-# fileNames = [path+"spr45_realJ_neutDiff_"+exten for exten in extens]
-# labels = ["imp frac = 1%", "imp frac = 2%", "imp frac = 4%", "imp frac = 8%"]
+    """ Restart from fimp01 40e19 case with different fimps """
+    # path = "./simulations/WP_X/"
+    # extens = ["fimp01_40e19_extended", "fimp02_40e19", "fimp04_40e19", "fimp08_40e19"]
+    # fileNames = [path+"spr45_realJ_neutDiff_"+exten for exten in extens]
+    # labels = ["imp frac = 1%", "imp frac = 2%", "imp frac = 4%", "imp frac = 8%"]
 
-""" Real J Neutral Diffusion, 1% impurity fraction, 40e19 startign density increasing starting densities """
-# path = "./simulations/WP_X/"
-# extens = ["20e19", "32e19", "34e19", "36e19", "38e19", "40e19", "42e19", "44e19","46e19", "48e19", "50e19", "52e19"]#]#
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
+    """ Real J Neutral Diffusion, 1% impurity fraction, 40e19 startign density increasing starting densities """
+    # path = "./simulations/WP_X/"
+    # extens = ["20e19", "32e19", "34e19", "36e19", "38e19", "40e19", "42e19", "44e19","46e19", "48e19", "50e19", "52e19"]#]#
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
 
-""" Restart from fimp01 40e19 case with different fimps """
-# path = "./simulations/WP_X/"
-# extens = ["_pow_2-000x", "_pow_1-414x", "_extended", "_pow_0-707x", "_pow_0-500x"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_40e19"+exten for exten in extens]
-# labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
+    """ Restart from fimp01 40e19 case with different fimps """
+    # path = "./simulations/WP_X/"
+    # extens = ["_pow_2-000x", "_pow_1-414x", "_extended", "_pow_0-707x", "_pow_0-500x"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_40e19"+exten for exten in extens]
+    # labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
 
-""" Real J, 40e19, 1% fimp, turning on and off neutral momentum """
-# path = "./simulations/WP_X/"
-# extens = ["neutDiff", "neutMom"]
-# fileNames = [path+"spr45_realJ_"+exten+"_fimp01_40e19/" for exten in extens]
+    """ Real J, 40e19, 1% fimp, turning on and off neutral momentum """
+    # path = "./simulations/WP_X/"
+    # extens = ["neutDiff", "neutMom"]
+    # fileNames = [path+"spr45_realJ_"+exten+"_fimp01_40e19/" for exten in extens]
 
-""" CE comp """
-# path = "./simulations/WP_X/"
-# extens = ["28e19", "28e19_noCE_collisions"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
-# extens = ["40e19_initial", "40e19_noCE_collisions"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
+    """ CE comp """
+    # path = "./simulations/WP_X/"
+    # extens = ["28e19", "28e19_noCE_collisions"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
+    # extens = ["40e19_initial", "40e19_noCE_collisions"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_"+exten for exten in extens]
 
-""" SS detachment 15m away from target, power step up, different dneut """
-# path = "./simulations/WP_X/"
-# extens = ["15m_dneut10_pow2x","15m_dneut10_pow4x","15m_dneut32_pow2x","15m_dneut32_pow4x","15m_dneut100_pow2x","15m_dneut100_pow4x"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19_"+exten for exten in extens]
-# # labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
+    """ SS detachment 15m away from target, power step up, different dneut """
+    # path = "./simulations/WP_X/"
+    # extens = ["15m_dneut10_pow2x","15m_dneut10_pow4x","15m_dneut32_pow2x","15m_dneut32_pow4x","15m_dneut100_pow2x","15m_dneut100_pow4x"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19_"+exten for exten in extens]
+    # # labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
 
-""" SS detachments away from target, power step up, different dneut """
-# path = "./simulations/WP_X/"
-# extens = ["05m_dneut10_pow2x","05m_dneut10_pow4x","10m_dneut10_pow2x","10m_dneut10_pow4x","15m_dneut10_pow2x","15m_dneut10_pow4x"]
-# fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19_"+exten for exten in extens]
-# # labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
+    """ SS detachments away from target, power step up, different dneut """
+    # path = "./simulations/WP_X/"
+    # extens = ["05m_dneut10_pow2x","05m_dneut10_pow4x","10m_dneut10_pow2x","10m_dneut10_pow4x","15m_dneut10_pow2x","15m_dneut10_pow4x"]
+    # fileNames = [path+"spr45_realJ_neutDiff_fimp01_28e19_"+exten for exten in extens]
+    # # labels = ["pow*2", "pow*sqrt(2)", "pow", "pow/sqrt(2)", "pow/2"]
 
-""" TCV flux limiter comparison """
-# path = "./simulations/WP_X/"
-# extens = ["fluxLim","noFluxLim"]
-# fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_"+exten for exten in extens]
+    """ TCV flux limiter comparison """
+    # path = "./simulations/WP_X/"
+    # extens = ["fluxLim","noFluxLim"]
+    # fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_"+exten for exten in extens]
 
-""" TCV Changing fimp """
-# path = "./simulations/WP_X/"
-# extens = ["1","5","7"]
-# fileNames = [path+"TCV_22MW_"+exten+"pc-carbon_longUpstream" for exten in extens]
+    """ TCV Changing fimp """
+    # path = "./simulations/WP_X/"
+    # extens = ["1","5","7"]
+    # fileNames = [path+"TCV_22MW_"+exten+"pc-carbon_longUpstream" for exten in extens]
 
-""" TCV Changing Power """
-# path = "./simulations/WP_X/"
-# extens = ["11","16","31"]
-# fileNames = [path+"TCV_"+exten+"MW_3pc-carbon_longUpstream" for exten in extens]
+    """ TCV Changing Power """
+    # path = "./simulations/WP_X/"
+    # extens = ["11","16","31"]
+    # fileNames = [path+"TCV_"+exten+"MW_3pc-carbon_longUpstream" for exten in extens]
 
-""" TCV powScan """
-# path = "./simulations/WP_X/"
-# extens = ["15-6","11-0","07-8","05-5","03-9","02-8","01-9","01-4","01-0","00-7","00-5","00-3"]
-# fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_powScan_"+exten+"MW" for exten in extens]
+    """ TCV powScan """
+    # path = "./simulations/WP_X/"
+    # extens = ["15-6","11-0","07-8","05-5","03-9","02-8","01-9","01-4","01-0","00-7","00-5","00-3"]
+    # fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_powScan_"+exten+"MW" for exten in extens]
 
-""" TCV fimpScan """
-# path = "./simulations/WP_X/"
-# extens = ["04-2","06-0","08-5","12-0","17-0","24-0","33-9","48-0"]
-# fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_fimpScan_"+exten for exten in extens]
+    """ TCV fimpScan """
+    # path = "./simulations/WP_X/"
+    # extens = ["04-2","06-0","08-5","12-0","17-0","24-0","33-9","48-0"]
+    # fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_fimpScan_"+exten for exten in extens]
 
-""" TCV 2e19 power scan """
-# path = "./simulations/WP_X/"
-# extens = ["2_0","1_4","1-2","1-4","1-8","1-16","1-32","1-64"]
-# fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_2e19udens_powScan_"+exten for exten in extens]
+    """ TCV 2e19 power scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["2_0","1_4","1-2","1-4","1-8","1-16","1-32","1-64"]
+    # fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_2e19udens_powScan_"+exten for exten in extens]
 
-""" TCV 2e19 fimp scan """
-# path = "./simulations/WP_X/"
-# extens = ["01","02","05","08","11","15","20","26"]
-# fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_2e19udens_fimpScan_"+exten for exten in extens]
+    """ TCV 2e19 fimp scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["01","02","05","08","11","15","20","26"]
+    # fileNames = [path+"TCV_22MW_3pc-carbon_longUpstream_2e19udens_fimpScan_"+exten for exten in extens]
 
-""" MAST-U 1.7e19 PI power scan """
-# path = "./simulations/WP_X/"
-# # extens = ["8_0","4_0","2_0","1_59","1_26","2-5","9-10","1-2","1-4","1-8","1-16","1-32"]
-# extens = ["2_0","1_59","1_26","1-2","1-4","9-10","2-5"]
-# fileNames = [path+"MAST-U_1-7e19udens_PI_powScan_"+exten for exten in extens]
+    """ MAST-U 1.7e19 PI power scan """
+    # path = "./simulations/WP_X/"
+    # # extens = ["8_0","4_0","2_0","1_59","1_26","2-5","9-10","1-2","1-4","1-8","1-16","1-32"]
+    # extens = ["2_0","1_59","1_26","1-2","1-4","9-10","2-5"]
+    # fileNames = [path+"MAST-U_1-7e19udens_PI_powScan_"+exten for exten in extens]
 
-""" MAST-U 1.7e19 power scan """
-# path = "./simulations/WP_X/"
-# extens = ["8_0","4_0","2_0","1-2","1-4","1-8","1-16","1-32"]
-# fileNames = [path+"MAST-U_1-7e19udens_powScan_"+exten for exten in extens]
+    """ MAST-U 1.7e19 power scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["8_0","4_0","2_0","1-2","1-4","1-8","1-16","1-32"]
+    # fileNames = [path+"MAST-U_1-7e19udens_powScan_"+exten for exten in extens]
 
-""" MAST-U 1.7e19 fimp scan """
-# path = "/home/mbk513/Downloads/" # "./simulations/WP_X/"
-# extens = ["01","02","03-5","08","11","15","20","25"]
-# fileNames = [path+"MAST-U_1-7e19udens_fimpScan_"+exten for exten in extens]
+    """ MAST-U 1.7e19 fimp scan """
+    # path = "/home/mbk513/Downloads/" # "./simulations/WP_X/"
+    # extens = ["01","02","03-5","08","11","15","20","25"]
+    # fileNames = [path+"MAST-U_1-7e19udens_fimpScan_"+exten for exten in extens]
 
-""" MAST-U 1.7e19 PI fimp scan """
-# path = "./simulations/WP_X/"
-# extens = ["02-5","06","07","08","09","10","15","20"]
-# fileNames = [path+"MAST-U_1-7e19udens_PI_fimpScan_"+exten for exten in extens]
+    """ MAST-U 1.7e19 PI fimp scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["02-5","06","07","08","09","10","15","20"]
+    # fileNames = [path+"MAST-U_1-7e19udens_PI_fimpScan_"+exten for exten in extens]
 
-""" MAST-U 1.7e19 dens scan """
-# path = "./simulations/WP_X/"
-# extens = ["1-75","2-00","2-25","2-50","2-75"]
-# fileNames = [path+"MAST-U_1-7e19udens_densScan_"+exten+"e19" for exten in extens]
+    """ MAST-U 1.7e19 dens scan """
+    # path = "./simulations/WP_X/"
+    # extens = ["1-75","2-00","2-25","2-50","2-75"]
+    # fileNames = [path+"MAST-U_1-7e19udens_densScan_"+exten+"e19" for exten in extens]
 
-""" STEP 40 m Power Scan """
-# path = "/home/mbk513/Downloads/" # "./simulations/WP_X/"
-# extens = ["2","4","8","16","32","64","128","256"]
-# fileNames = [path+"spr45_realJ_40m_powScan_"+exten for exten in extens]
+    """ STEP 40 m Power Scan """
+    # path =  "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # extens = ["2"]#,"4","8","16","32","64","128","256"]
+    # fileNames = [path+"spr45_realJ_40m_powScan_"+exten for exten in extens]
 
-""" STEP 40 m PI Power Scan"""
-# path = "./simulations/WP_X/" #
-# extens = ["2","4","8","16"]
-# fileNames = [path+"spr45_realJ_40m_PI_powScan_"+exten for exten in extens]
+    """ STEP 40 m PI Power Scan"""
+    # path = "./simulations/WP_X/" #
+    # extens = ["2","4","8","16"]
+    # fileNames = [path+"spr45_realJ_40m_PI_powScan_"+exten for exten in extens]
 
-""" STEP 10 m power step vs pulse """
-# path = "/home/mbk513/Downloads/" # "./simulations/WP_X/" #
-# extens = ["4x","4x_pulse"]
+    """ STEP 10 m power step vs pulse """
+    # path = "/home/mbk513/Downloads/" # "./simulations/WP_X/" #
+    # extens = ["4x","4x_pulse"]
+    # fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
+
+    """ STEP 10 m power increases """
+    # path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # extens = ["1-490x"]
+    # # extens = ["1-350x","1-360x","1-375x","1-385x","1-400x","1-414x","1-430x","1-445x","1-460x","1-490x","1-600x","1-682x","1-850x","2-000x"]
+    # # extens = ["1-189x","1-200x","1-250x","1-350x","1-360x","1-375x","1-385x","1-400x","1-414x","1-430x","1-445x","1-460x","1-490x","1-600x","1-682x","1-850x","2-000x"]# "1-189x_fL-MC",
+    # fileNames = [path+"spr45_realJ_10m_det_PI_powScan_"+exten for exten in extens]
+    # labels = [float(ext.replace("-",".").replace("x","")) for ext in extens]
+
+    """ STEP 10 m power increases - hysteresis """
+    # path =  "./simulations/WP_X/"
+    # extens = ["1-350x","1-414x","1-600x","1-850x"]
+    # fileNames = [path+"spr45_realJ_10m_det_PI_powScan_"+exten+"-hyst" for exten in extens]
+    # labels = [1.350,1.414,1.600,1.850]
+
+    """ STEP 10 m power pulses """
+    # path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # # extens = ["1ms_2x","1ms_4x","10ms_2x","10ms_4x","100ms_2x","100ms_4x"]
+    # # extens = ["10ms_2x","10ms_4x"]
+    # extens = ["100ms_2x","100ms_4x"]
+    # # extens = ["1000ms_2x","1000ms_4x"]
+    # fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
+
+    """ STEP 10 m power pulses PI """
+    # path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # # extens = ["1ms_2x","1ms_4x","10ms_2x","10ms_4x","100ms_4x"]#,"1000ms_2x","1000ms_4x"]
+    # # extens = ["1ms_2x","1ms_4x"]
+    # # extens = ["10ms_2x","10ms_4x"]
+    # # extens = ["100ms_4x"]
+    # extens = ["1000ms_2x","1000ms_4x"]
+    # fileNames = [path+"spr45_realJ_10m_det_PI_"+exten for exten in extens]
+
+    """ Resolution checks """
+    # path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # # extens = ["ny800_dymin0-05","ny400_dymin0-05","ny200_dymin0-05","ny400_dymin0-25","ny400_dymin0-01","ny100_dymin0-05","ny200_dymin0-05_MC"]
+    # extens = ["ny3200_dymin0-05","ny1600_dymin0-05","ny800_dymin0-05","ny400_dymin0-05","ny200_dymin0-05","ny100_dymin0-05"]
+    # # extens = ["ny400_dymin0-05","ny400_dymin0-25","ny400_dymin0-01"]
+    # # extens = ["ny800_dymin0-25","ny800_dymin0-10","ny800_dymin0-05","ny800_dymin0-01"]
+    # # extens = ["ny200_dymin0-05","ny200_dymin0-05_MC"]
+    # # extens = ["ny400_dymin0-05_rtol-1e-8","ny400_dymin0-05_rtol-1e-6","ny400_dymin0-05_rtol-1e-4","ny400_dymin0-05_rtol-1e-2"]
+    # # extens = ["ny3200_dymin0-05","ny1600_dymin0-01_rtol-1e-8","ny1600_dymin0-05","ny800_dymin0-05","ny600_dymin0-025_rtol-1e-5"]
+    # fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
+
+    """ Log grid vs standard """
+    # path = "./simulations/WP_X/"
+    # extens = ["PI_powScan_2-000x","logGrid_2x_200ms"]
+    # fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
+
+    """ Rebounds """
+    # path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+    # # extens = ["8m","6m","4m","2m","0m"]
+    # # extens = ["0m","2m","4m","5m","6m","7m","8m","9m"]
+    # fileNames = [path+"spr45_realJ_10m_det_2x-rebound-"+exten for exten in extens]
+
+""" Osc Comp with const pow """
+# path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
+# extens = ["powOsc_1-0_1-5x","PI_powScan_1-250x"]
+# extens = ["powOsc_1-0_2-0x","PI_powScan_1-490x"]
 # fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
 
-""" STEP 10 m power increases """
-# path = "./simulations/WP_X/" # "/home/mbk513/Downloads/" #
-# extens = ["1-360x","1-375x"]
-# # extens = ["1-350x","1-360x","1-375x","1-385x","1-400x","1-414x","1-430x","1-445x","1-460x","1-490x","1-600x","1-682x","1-850x","2-000x"]
-# # extens = ["1-189x","1-200x","1-250x","1-350x","1-360x","1-375x","1-385x","1-400x","1-414x","1-430x","1-445x","1-460x","1-490x","1-600x","1-682x","1-850x","2-000x"]# "1-189x_fL-MC",
-# fileNames = [path+"spr45_realJ_10m_det_PI_powScan_"+exten for exten in extens]
-# labels = [float(ext.replace("-",".").replace("x","")) for ext in extens]
+""" High Res Runs """
+path = "/home/mbk513/Downloads/" # "./simulations/WP_X/" #
+extens = ["ny800_dymin0-05_rtol1e-6_kla-0-2_fimp-1-5_udens-4-65","ny1600_dymin0-05_rtol1e-6_kla-0-2_fimp-1-5_udens-4-9"]
+fileNames = [path+"spr45_realJ_dz-1_"+exten for exten in extens]
 
-""" STEP 10 m power increases - hysteresis """
-# path =  "./simulations/WP_X/"
-# extens = ["1-350x","1-414x","1-600x","1-850x"]
-# fileNames = [path+"spr45_realJ_10m_det_PI_powScan_"+exten+"-hyst" for exten in extens]
-# labels = [1.350,1.414,1.600,1.850]
-
-""" STEP 10 m power pulses """
-path =  "/home/mbk513/Downloads/" # "./simulations/WP_X/" #
-extens = ["1ms_2x","1ms_4x","10ms_2x","10ms_4x"]#,"100ms_2x","100ms_4x"]
-fileNames = [path+"spr45_realJ_10m_det_"+exten for exten in extens]
-
-""" STEP 10 m power pulses PI """
-# path =  "/home/mbk513/Downloads/" # "./simulations/WP_X/" #
-# extens = ["1ms_2x","1ms_4x","10ms_2x","10ms_4x","100ms_2x","100ms_4x"]
-# fileNames = [path+"spr45_realJ_10m_det_PI_"+exten for exten in extens]
 
 filesDict = {}
 for fileName in fileNames:
@@ -410,28 +459,38 @@ except:
     labels = extens
 
 """ wtime check """
-if(0):
+if(1):
     for fileName,exten in zip(fileNames,extens):
-        print("file Exten: %s, num steps: %i"%(exten,len(filesDict[fileName]["t_array"])))
+        print("file Exten: %-26s, num steps: %i"%(exten,len(filesDict[fileName]["t_array"])))
     print("##########")
     colours = cm.rainbow(np.linspace(0,1,len(fileNames)+1))
     fig = plt.figure(1)
     ax1 = fig.add_subplot(111)
     ax2 = ax1.twiny()
     for fileName,colour,exten,lab in zip(fileNames,colours,extens,labels):
-        ax2.plot(filesDict[fileName]["wtime"],color="white",alpha=0)
+        plt.figure(1)
         ax1.plot(filesDict[fileName]["t_array"], filesDict[fileName]["wtime"],color=colour,label=lab)
-        # ax2.plot(filesDict[fileName]["ncalls"],color="white",alpha=0)
-        # ax1.plot(filesDict[fileName]["t_array"], filesDict[fileName]["ncalls"],color=colour,label=lab)
         ax1.axvline(x=np.max(filesDict[fileName]["t_array"]),color=colour,linestyle="--")
-        print("file Exten: %s, total seconds: %i"%(exten,np.sum(filesDict[fileName]["wtime"])))
+        plt.figure(2)
+        totTime = np.cumsum(filesDict[fileName]["wtime"])
+        plt.plot(filesDict[fileName]["t_array"],totTime,color=colour,label=lab)
+        plt.axvline(x=np.max(filesDict[fileName]["t_array"]),color=colour,linestyle="--")
+        timePerStep = np.sum(filesDict[fileName]["wtime"])/len(filesDict[fileName]["t_array"])
+        timePerTime = np.sum(filesDict[fileName]["wtime"])/filesDict[fileName]["t_array"][-1]
+        print("file Exten: %-26s, total seconds: %-6i, sim time per real time: %i"%(exten,np.sum(filesDict[fileName]["wtime"]),timePerTime))
+    plt.figure(1)
     ax1.set_zorder(1)
     ax2.set_zorder(-1)
     ax1.legend(loc="best")
-    ax1.set_yscale("log")
+    # ax1.set_yscale("log")
     ax1.set_xlabel("Real Time (ms)")
     ax2.set_xlabel("Time Index")
     ax1.set_ylabel("Sim. Time (s)")
+    plt.figure(2)
+    plt.legend(loc="best")
+    plt.xlabel("Real Time (ms)")
+    plt.xlabel("Time Index")
+    plt.ylabel("Sim. Time (s)")
     # ax1.set_ylabel("ncalls")
     plt.show()
     # sys.exit()
@@ -535,142 +594,150 @@ if(1):
         detLoc    = np.copy(detLoc)[tStart:tStop]                              # Detachment Front in [m]
         rawTime   = 1e-3*(np.copy(filesDict[fileName]["t_array"][tStart:tStop])-t0)      # Time in [s]
 
-        plt.figure(1)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Ne"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3,label=lab)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Ne"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd+"][tStart:tStop,-1],color=colour,linestyle="-", zorder=3)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd+"][tStart:tStop,0], color=colour,linestyle=":", zorder=2)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
-        if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
-        ##################
-        plt.figure(2)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Pe"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,  linestyle="-", zorder=3,label=lab)
-        if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
-        ##################
-        plt.figure(3)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Nd+"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,linestyle="-",zorder=3,label=lab)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Nd"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,linestyle="--",zorder=3)
-        totalParticleNumber = np.sum(filesDict[fileName]["Nd+"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1)+np.sum(filesDict[fileName]["Nd"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,totalParticleNumber, color=colour, linestyle=":",zorder=3)
-        if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
-        ##################
-        plt.figure(4)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Te"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3,label=lab)
-        plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Te"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
-        if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
-        ##################
-        plt.figure(5)
-        plt.plot(cellPos[:],filesDict[fileName]["Ne"][tIndex,:],linestyle="-", marker=".",color=colour,label=lab, zorder=2)
-        plt.plot(cellPos[:],filesDict[fileName]["Nd"][tIndex,:],linestyle="--",marker="", color=colour,zorder=1)
-        print("Upstream density = %.3e m^-3"%filesDict[fileName]["Ne"][tIndex,0])
-        ##################
-        plt.figure(6)
-        plt.plot(cellPos[:],filesDict[fileName]["Te"][tIndex,:],color=colour,zorder=2,label=lab)
-        # plt.plot(cellPos[:],np.gradient(filesDict[fileName]["Te"][tIndex,:],cellPos[:]),color=colour,zorder=2,label=lab)
-        ##################
-        plt.figure(7)
-        plt.plot(cellPos[:],filesDict[fileName]["Pe"][tIndex,:],color=colour,zorder=2,label=lab)
-        plt.plot(cellPos[:],filesDict[fileName]["Pd"][tIndex,:],color=colour,zorder=2)
-        # print("Target Pressure  = %.3e Pa"%filesDict[fileName]["Pd"][tIndex,-1])
+        # plt.figure(1)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Ne"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3,label=lab)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Ne"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd+"][tStart:tStop,-1],color=colour,linestyle="-", zorder=3)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd+"][tStart:tStop,0], color=colour,linestyle=":", zorder=2)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Nd"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
+        # if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
+        # ##################
+        # plt.figure(2)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Pe"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,  linestyle="-", zorder=3,label=lab)
+        # if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
+        # ##################
+        # plt.figure(3)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Nd+"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,linestyle="-",zorder=3,label=lab)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,np.sum(filesDict[fileName]["Nd"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1),color=colour,linestyle="--",zorder=3)
+        # totalParticleNumber = np.sum(filesDict[fileName]["Nd+"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1)+np.sum(filesDict[fileName]["Nd"][tStart:tStop,1:-1]*filesDict[fileName]["cellVolume"][1:-1],axis=1)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,totalParticleNumber, color=colour, linestyle=":",zorder=3)
+        # if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
+        # ##################
+        # plt.figure(4)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Te"][tStart:tStop,-1], color=colour,linestyle="-", zorder=3,label=lab)
+        # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,filesDict[fileName]["Te"][tStart:tStop,0],  color=colour,linestyle=":", zorder=2)
+        # if(tIndex!=-1): plt.axvline(x=filesDict[fileName]["t_array"][tIndex],color="tab:grey",linestyle="--")
+        # ##################
+        # plt.figure(5)
+        # plt.plot(cellPos[:],filesDict[fileName]["Ne"][tIndex,:],linestyle="-", marker=".",color=colour,label=lab, zorder=2)
+        # plt.plot(cellPos[:],filesDict[fileName]["Nd"][tIndex,:],linestyle="--",marker="", color=colour,zorder=1)
+        # print("Upstream density = %.3e m^-3"%filesDict[fileName]["Ne"][tIndex,0])
+        # ##################
+        # plt.figure(6)
+        # plt.plot(cellPos[:],filesDict[fileName]["Te"][tIndex,:],color=colour,zorder=2,label=lab)
+        # # plt.plot(cellPos[:],np.gradient(filesDict[fileName]["Te"][tIndex,:],cellPos[:]),color=colour,zorder=2,label=lab)
+        # ##################
+        # plt.figure(7)
+        # plt.plot(cellPos[:],filesDict[fileName]["Pe"][tIndex,:],color=colour,zorder=2,label=lab)
+        # plt.plot(cellPos[:],filesDict[fileName]["Pd"][tIndex,:],color=colour,zorder=2)
+        # # print("Target Pressure  = %.3e Pa"%filesDict[fileName]["Pd"][tIndex,-1])
         ##################
         plt.figure(8)
         plt.plot(rawTime,1e2*detLoc, linestyle="-", color=colour,label=lab)
         # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,1e2*np.array(detLoc[tStart:tStop]), linestyle="-", color=colour,label=lab)
         # plt.plot(filesDict[fileName]["t_array"][tStart:tStop]-t0,1e2*np.array(peakRad[tStart:tStop]),linestyle="--",color=colour)#,label=lab)
         print("Front position   = %.3e m"%detLoc[tIndex])
-        # ##################
-        # plt.figure(9)
-        # xTime     = np.copy(rawTime)[(rawTime>=0.0)*(detLoc>1.0)]#[:np.argmin(detLoc)]#
-        # detLocFit = np.copy(detLoc)[(rawTime>=0.0)*(detLoc>1.0)]#[:np.argmin(detLoc)]#
-        # guess     = [5.]#,np.min(detLoc)]
-        # def expo(t,k):#,y0):
-        #     # return np.max(detLoc)*np.exp(-(0.772*(lab-1.))*t/tau)
-        #     return np.max(detLoc)*np.exp(-k*t)
-        # popt, pcov = curve_fit(expo,xTime,detLocFit,p0=guess)
-        # if(i==0):
-        #     popts = popt
-        # else:
-        #     popts = np.append(popts,popt,axis=0)
-        # from sklearn.metrics import r2_score
+        ##################
+        plt.figure(9)
+        xTime     = np.copy(rawTime)[(rawTime>=0.0)*(detLoc>0.5)][:np.argmin(detLoc)]#
+        detLocFit = np.copy(detLoc)[(rawTime>=0.0)*(detLoc>0.5)][:np.argmin(detLoc)]#
+        if(isinstance(lab,float)):
+            guess = [10.*(lab-1.0)*0.772]#,np.min(detLoc)]
+        else:
+            guess = [5.]
+        def expo(t,k):
+            return np.max(detLoc)*np.exp(-k*t)
+        popt, pcov = curve_fit(expo,xTime,detLocFit,p0=guess)
+        if(i==0):
+            popts = popt
+        else:
+            popts = np.append(popts,popt,axis=0)
+        from sklearn.metrics import r2_score
         # coefficient_of_dermination = r2_score(detLocFit, expo(xTime,*popt))
         # rSquared = 1.0-( np.sum((detLocFit-expo(xTime,*popt))**2.) / np.sum((detLocFit-np.mean(detLocFit))**2.) )
         # print(rSquared,coefficient_of_dermination)
         # print(rSquared)
         # rSquareds.append(rSquared)
-        # plt.plot(rawTime,detLoc,            linestyle="-", color=colour,label=lab)
-        # # plt.plot(xTime,  expo(xTime,*guess),linestyle="--",color=colour)#,label="guess")
-        # plt.plot(xTime,  expo(xTime,*popt), linestyle=":", color=colour)#,label="popt")
-        # ##################
-        # plt.figure(10)
-        # xTime     = np.copy(rawTime)[np.argmin(detLoc):]
-        # minTime   = xTime[0]
-        # xTime    -= minTime
-        # detLocFit = np.copy(detLoc)[np.argmin(detLoc):]
-        # guess     = [1.]
-        # def expo(t,k):
-        #     return np.max(detLoc)*(1.-np.exp(-(k/(3e6*30.))*(0.772*(lab-1.))*1e9*t)) # (np.max(detLoc)-np.min(detLoc))*np.exp(-k*t)+y0
-        # popt, pcov = curve_fit(expo,xTime,detLocFit,p0=guess)
-        # plt.plot(rawTime,       detLoc,            linestyle="-", color=colour,label=lab)
-        # plt.plot(xTime+minTime, expo(xTime,*guess),linestyle="--",color=colour)#,label="guess")
-        # plt.plot(xTime+minTime, expo(xTime,*popt), linestyle=":", color=colour)#,label="popt")
+        plt.plot(rawTime[:np.argmin(detLoc)],detLoc[:np.argmin(detLoc)],              linestyle="-", color=colour,label=lab)
+        plt.plot(rawTime[np.argmin(detLoc):],detLoc[np.argmin(detLoc):],              linestyle="--", color=colour,label=lab)
+        # plt.plot(rawTime,expo(rawTime,*guess),linestyle="--",color=colour)#,label="guess")
+        plt.plot(rawTime,expo(rawTime,*popt), linestyle=":", color=colour)#,label="pop")
+        ##################
+        plt.figure(10)
+        argBounce = np.where(detLoc==np.min(detLoc))[0][-1]
+        xTime     = np.copy(rawTime)[argBounce:]
+        minTime   = xTime[0]
+        xTime    -= minTime
+        detLocFit = np.copy(detLoc)[argBounce:]
+        guess     = [9.877,0.3+np.min(detLocFit),6.]
+        def expo(t,yMax,yMin,l):
+            return yMax-(yMax-yMin)*np.exp(-l*t)
+        lB, uB = [9.876,0.3+np.min(detLocFit)*0.999,0.], [9.878,0.3001+np.min(detLocFit)*1.001,np.inf]
+        # lB, uB = [9.876,0.,0.], [9.878,np.inf,np.inf]
+        # lB, uB = [0.0,np.min(detLocFit)*0.999,0.], [np.inf,0.0001+np.min(detLocFit)*1.001,np.inf]
+        popt, pcov = curve_fit(expo,xTime,detLocFit,p0=guess,bounds=(lB,uB))
+        plt.plot(rawTime[(detLoc<43.0)],detLoc[(detLoc<43.0)],linestyle="-",color=colour,label=lab)
+        # plt.plot(xTime+minTime, expo(xTime,*guess),linestyle="--",color=colour,label="guess")
+        plt.plot(xTime+minTime, expo(xTime,*popt), linestyle=":", color=colour,label="popt")
+        print(guess,popt)
 
-    plt.figure(1)
-    plt.title("Plasma Density Evolution")
-    plt.legend(loc="best")
-    plt.xlabel("Time (ms)")
-    plt.ylabel("Ne, t_array[:] (1e20 m^-3)")
-    plt.tight_layout()
-    ##################
-    plt.figure(2)
-    plt.title("Summed Plasma Pressure Evolution")
-    plt.legend(loc="best")
-    plt.xlabel("Time (ms)")
-    plt.ylabel("np.sum(P), t_array[:]")
-    plt.tight_layout()
-    ##################
-    plt.figure(3)
-    plt.title("Total Particle Number Evolution")
-    plt.legend(loc="best")
-    plt.xlabel("Time (ms)")
-    plt.ylabel("np.sum(Ne)")
-    plt.tight_layout()
-    ##################
-    plt.figure(4)
-    plt.title("Plasma Temperature Evolution")
-    plt.legend(loc="best")
-    plt.xlabel("Time (ms)")
-    plt.ylabel("Te, t_array[:] (eV)")
-    plt.tight_layout()
-    ##################
-    plt.figure(5)
-    # plt.axvline(x=78.13-0.05,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.10,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.20,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.40,color="tab:grey",linestyle="--")
-    plt.title("Final Density Profiles")
-    plt.legend(loc="best")
-    plt.xlabel("Cell Posistion (m)")
-    plt.ylabel("Particle Density (m^-3)")
-    plt.tight_layout()
-    ##################
-    plt.figure(6)
-    # plt.axvline(x=78.13-0.05,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.10,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.20,color="tab:grey",linestyle="--")
-    # plt.axvline(x=78.13-0.40,color="tab:grey",linestyle="--")
-    plt.legend(loc="best")
-    plt.title("Final Temperature Profile")
-    plt.xlabel("Cell Posistion (m)")
-    plt.ylabel("Plasma Temperature (eV)")
-    plt.tight_layout()
-    ##################
-    plt.figure(7)
-    plt.legend(loc="best")
-    plt.title("Final Pressure Profile")
-    plt.xlabel("cellPos (m)")
-    plt.ylabel("P[:], t_array[-1]")
-    plt.tight_layout()
+    # plt.figure(1)
+    # plt.title("Plasma Density Evolution")
+    # plt.legend(loc="best")
+    # plt.xlabel("Time (ms)")
+    # plt.ylabel("Ne, t_array[:] (1e20 m^-3)")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(2)
+    # plt.title("Summed Plasma Pressure Evolution")
+    # plt.legend(loc="best")
+    # plt.xlabel("Time (ms)")
+    # plt.ylabel("np.sum(P), t_array[:]")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(3)
+    # plt.title("Total Particle Number Evolution")
+    # plt.legend(loc="best")
+    # plt.xlabel("Time (ms)")
+    # plt.ylabel("np.sum(Ne)")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(4)
+    # plt.title("Plasma Temperature Evolution")
+    # plt.legend(loc="best")
+    # plt.xlabel("Time (ms)")
+    # plt.ylabel("Te, t_array[:] (eV)")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(5)
+    # # plt.axvline(x=78.13-0.05,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.10,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.20,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.40,color="tab:grey",linestyle="--")
+    # plt.title("Final Density Profiles")
+    # plt.legend(loc="best")
+    # plt.xlabel("Cell Posistion (m)")
+    # plt.ylabel("Particle Density (m^-3)")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(6)
+    # # plt.axvline(x=78.13-0.05,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.10,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.20,color="tab:grey",linestyle="--")
+    # # plt.axvline(x=78.13-0.40,color="tab:grey",linestyle="--")
+    # plt.legend(loc="best")
+    # plt.title("Final Temperature Profile")
+    # plt.xlabel("Cell Posistion (m)")
+    # plt.ylabel("Plasma Temperature (eV)")
+    # plt.tight_layout()
+    # ##################
+    # plt.figure(7)
+    # plt.legend(loc="best")
+    # plt.title("Final Pressure Profile")
+    # plt.xlabel("cellPos (m)")
+    # plt.ylabel("P[:], t_array[-1]")
+    # plt.tight_layout()
     ##################
     plt.figure(8)
     # plt.xlim([0,5])
@@ -687,13 +754,13 @@ if(1):
     # plt.xlabel("Time (s)")
     # plt.ylabel("Detachment Front (m)")
     # plt.tight_layout()
-    # ##################
-    # plt.figure(10)
-    # plt.title("Front Rebound Fits")
-    # plt.legend(loc="best")
-    # plt.xlabel("Time (s)")
-    # plt.ylabel("Detachment Front (m)")
-    # plt.tight_layout()
+    ##################
+    plt.figure(10)
+    plt.title("Front Rebound Fits")
+    plt.legend(loc="best")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Detachment Front (m)")
+    plt.tight_layout()
     # # plt.show()
 
 # Heat flux on target
@@ -739,7 +806,7 @@ if(0):
     # sys.exit()
 
 plt.show()
-sys.exit()
+# sys.exit()
 
 power0      = 0.772 # 7.72e8
 poptsArr    = np.reshape(np.ravel(popts),(len(fileNames),len(popt)))
@@ -759,6 +826,8 @@ plt.plot(powerDiff,rSquareds,marker="x")
 plt.ylabel("R$^2$")
 plt.xlabel(r"$P_{Diff}$")
 plt.show()
+
+sys.exit()
 
 plt.figure()
 plt.plot(powerFactor,poptsArr[:,0],          linestyle="-", marker="x",color="tab:blue", label="Param")
