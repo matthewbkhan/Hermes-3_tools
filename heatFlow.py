@@ -127,23 +127,41 @@ if(1):
     tempVal  = 5.0 # eV
     tempMean = (ds["Te"].values+ds["Td+"].values)/2.
     detLoc   = ds["pos"].values[-1]-ds["pos"].values[np.argmin(np.abs(tempMean-tempVal),axis=1)]
+    timeNorm = ds["t"].values-ds["t"].values[0]
     plt.figure()
     plt.title(filePath.split("/")[-2])
     ax1 = plt.gca()
     ax2 = ax1.twinx()
-    ax1.plot(ds["t"].values-ds["t"].values[0],totalInputPow.values*1e-6,     color="tab:blue",  label="Input Power")
-    # ax1.plot(ds["t"].values-ds["t"].values[0],electronInputSum*1e-6,         color="tab:red",   label="Pe_src")
-    # ax1.plot(ds["t"].values-ds["t"].values[0],ionInputSum*1e-6,              color="tab:orange",label="Pd+_src")
+    ax1.plot(timeNorm,totalInputPow.values*1e-6,     color="tab:blue",  label="Input Power")
+    # ax1.plot(timeNorm,electronInputSum*1e-6,         color="tab:red",   label="Pe_src")
+    # ax1.plot(timeNorm,ionInputSum*1e-6,              color="tab:orange",label="Pd+_src")
     ax1.axhline(y=772,color="tab:purple",linestyle="--",label="Base Power (772 MW)")
     # ax1.legend(loc="best")
     ax1.set_xlabel("Time (ms)")
     ax1.set_ylabel("Input Power (MW)")
     ax1.grid(True)
     # #----- Pow Factor
-    # ax2.plot(ds["t"].values-ds["t"].values[0],totalInputPow.values*1e-6/772.,color="white",     alpha=0.0)
+    # ax2.plot(timeNorm,totalInputPow.values*1e-6/772.,color="white",     alpha=0.0)
     # ax2.set_ylabel("Power Factor")
     #----- Det Loc
-    ax2.plot(ds["t"].values-ds["t"].values[0],detLoc, color="tab:red", label="Det Loc")
+    ax2.plot(timeNorm,detLoc, color="tab:red", label="Det Loc")
+    if(1):
+        from scipy.optimize import curve_fit
+        def sineWave(t,amp0,flucAmp,period,phase):
+            return amp0 + flucAmp*np.sin((2.*np.pi*t/period)+phase)
+        guess  = [np.mean(detLoc),np.max(detLoc)-np.mean(detLoc),25,-np.pi/2.]
+        bounds = [[0.,0.,0.,-2.*np.pi],[np.inf,np.inf,np.inf,2.*np.pi]]
+        popt1, pcov = curve_fit(sineWave,timeNorm,detLoc,p0=guess,bounds=bounds)
+        for p,g,n in zip(popt1,guess,["amp0","flucAmp","period","phase"]):
+            print("%s, %.3f, %.3f"%(n,p,g))
+        ax2.plot(timeNorm,sineWave(timeNorm,*popt1),linestyle="--",color="tab:green",label="Fitted Sine")
+        guess  = [np.mean(totalInputPow.values*1e-6),np.max(totalInputPow.values*1e-6)-np.mean(totalInputPow.values*1e-6),25,np.pi/2.]
+        bounds = [[0.,0.,0.,-2.*np.pi],[np.inf,np.inf,np.inf,2.*np.pi]]
+        popt2, pcov = curve_fit(sineWave,timeNorm,totalInputPow.values*1e-6,p0=guess,bounds=bounds)
+        for p,g,n in zip(popt2,guess,["amp0","flucAmp","period","phase"]):
+            print("%s, %.3f, %.3f"%(n,p,g))
+        print((popt1[3]-popt2[3]))
+        ax1.plot(timeNorm,sineWave(timeNorm,*popt2),linestyle="--",color="tab:orange",label="Fitted Sine")
     ax2.set_ylabel("Detachment Front Location (m)")
 
     lns1, labs1 = ax1.get_legend_handles_labels()

@@ -45,8 +45,8 @@ length_xpt = 35.14 # 57.98
 areaExp    = 2.051 # 1.818
 
 """ Standard Set up """
-ny_stand    = 1600
-dymin_stand = 0.050
+ny_stand    = 800
+dymin_stand = 0.250
 
 """ det10m """
 # ny_log  = 1200
@@ -79,10 +79,11 @@ if(0):
     plt.legend(loc="best")
     plt.show()
     for dymin,linestyle in zip([0.01,0.05,0.25],["-","--",":"]):
-        yRange_stand = np.linspace(0,2.*np.pi,400)
-        dy_stand, cellPos_stand, totalDist_stand = standardGrid(yRange_stand,length,length_xpt,400,dymin)
+        ny = 800
+        yRange_stand = np.linspace(0,2.*np.pi,ny)
+        dy_stand, cellPos_stand, totalDist_stand = standardGrid(yRange_stand,length,length_xpt,ny,dymin)
         # plt.plot(cellPos_stand,1e2*dy_stand,marker=".",zorder=0,label="ny=%i, dymin=%.3f"%(400,dymin))
-        plt.plot(cellPos_stand,1e2*dy_stand,linestyle=linestyle,linewidth=2,zorder=0,label="ny=%i, dymin=%.3f"%(400,dymin))
+        plt.plot(cellPos_stand,1e2*dy_stand,linestyle=linestyle,linewidth=2,zorder=0,label="ny=%i, dymin=%.3f"%(ny,dymin))
     plt.ylabel("dy (cm)")
     plt.xlabel("y (m)")
     plt.ylim(bottom=0.0)
