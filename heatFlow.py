@@ -149,12 +149,19 @@ if(1):
         from scipy.optimize import curve_fit
         def sineWave(t,amp0,flucAmp,period,phase):
             return amp0 + flucAmp*np.sin((2.*np.pi*t/period)+phase)
-        guess  = [np.mean(detLoc),np.max(detLoc)-np.mean(detLoc),25,0.]
+        guess  = [np.mean(detLoc),np.max(detLoc)-np.mean(detLoc),25,-np.pi/2.]
         bounds = [[0.,0.,0.,-2.*np.pi],[np.inf,np.inf,np.inf,2.*np.pi]]
-        popt, pcov = curve_fit(sineWave,timeNorm,detLoc,p0=guess,bounds=bounds)
-        for p,g,n in zip(popt,guess,["amp0","flucAmp","period","phase"]):
+        popt1, pcov = curve_fit(sineWave,timeNorm,detLoc,p0=guess,bounds=bounds)
+        for p,g,n in zip(popt1,guess,["amp0","flucAmp","period","phase"]):
             print("%s, %.3f, %.3f"%(n,p,g))
-        ax2.plot(timeNorm,sineWave(timeNorm,*popt),linestyle="--",color="tab:green",label="Fitted Sine")
+        ax2.plot(timeNorm,sineWave(timeNorm,*popt1),linestyle="--",color="tab:green",label="Fitted Sine")
+        guess  = [np.mean(totalInputPow.values*1e-6),np.max(totalInputPow.values*1e-6)-np.mean(totalInputPow.values*1e-6),25,np.pi/2.]
+        bounds = [[0.,0.,0.,-2.*np.pi],[np.inf,np.inf,np.inf,2.*np.pi]]
+        popt2, pcov = curve_fit(sineWave,timeNorm,totalInputPow.values*1e-6,p0=guess,bounds=bounds)
+        for p,g,n in zip(popt2,guess,["amp0","flucAmp","period","phase"]):
+            print("%s, %.3f, %.3f"%(n,p,g))
+        print((popt1[3]-popt2[3]))
+        ax1.plot(timeNorm,sineWave(timeNorm,*popt2),linestyle="--",color="tab:orange",label="Fitted Sine")
     ax2.set_ylabel("Detachment Front Location (m)")
 
     lns1, labs1 = ax1.get_legend_handles_labels()
